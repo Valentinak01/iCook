@@ -27,9 +27,23 @@ function Toggle({ checked, onChange, label, hint }) {
 }
 
 export default function SettingsPage() {
-  const { settings, updateSettings, exportData, importData, resetToSamples, clearAll, recipes, categories, toast } = useStore();
+  const { settings, updateSettings, exportData, importData, uploadLocalRecipes, resetToSamples, clearAll, recipes, categories, toast, online, legacyCount } = useStore();
   const fileRef = useRef(null);
   const [confirm, setConfirm] = useState(null); // 'reset' | 'clear'
+  const [busy, setBusy] = useState(false);
+
+  // Hochladen kann bei vielen Fotos etwas dauern – Ergebnis als Meldung
+  const run = async (action, success) => {
+    setBusy(true);
+    try {
+      const failed = await action();
+      if (failed) toast(`${failed} Rezept(e) konnten nicht gespeichert werden – bitte erneut versuchen.`, 'error');
+      else toast(success);
+    } catch {
+      toast('Das hat nicht geklappt – bitte Verbindung prüfen.', 'error');
+    }
+    setBusy(false);
+  };
 
   let usedKb = 0;
   try {
@@ -46,12 +60,13 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    let data;
     try {
-      importData(JSON.parse(await file.text()));
-      toast('Daten erfolgreich importiert');
+      data = JSON.parse(await file.text());
     } catch {
-      toast('Datei konnte nicht importiert werden', 'error');
+      return toast('Datei konnte nicht gelesen werden', 'error');
     }
+    run(() => importData(data), 'Daten erfolgreich importiert');
   };
 
   return (
@@ -104,28 +119,61 @@ export default function SettingsPage() {
       </section>
 
       <section className="card settings-card">
+        <h2><Icon name={online ? 'users' : 'lock'} size={18} /> Speicherort</h2>
+        {online ? (
+          <p className="muted small">
+            Verbunden mit der Online-Datenbank: Rezepte, Kategorien und Fotos sind für alle sichtbar und von allen bearbeitbar.
+            Favoriten, Einkaufsliste und Einstellungen bleiben nur in diesem Browser.
+          </p>
+        ) : (
+          <p className="muted small">
+            Rezepte werden nur in diesem Browser gespeichert. Für ein gemeinsames Rezeptbuch die Online-Datenbank einrichten (siehe README).
+          </p>
+        )}
+        {legacyCount > 0 && (
+          <div className="setting-row">
+            <div>
+              <strong>{legacyCount} lokale Rezepte gefunden</strong>
+              <p className="muted small">Diese Rezepte liegen noch nur in diesem Browser. Hochladen, damit alle sie sehen.</p>
+            </div>
+            <button className="btn btn-primary" disabled={busy} onClick={() => run(uploadLocalRecipes, 'Lokale Rezepte hochgeladen')}>
+              <Icon name="upload" size={17} /> {busy ? 'Wird hochgeladen …' : 'Hochladen'}
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="card settings-card">
         <h2>Datensicherung</h2>
         <p className="muted small">
           {recipes.length} Rezepte · {categories.length} Kategorien · ca. {usedKb} KB belegt
         </p>
         <div className="row-buttons">
           <button className="btn btn-outline" onClick={doExport}><Icon name="download" size={17} /> Backup exportieren</button>
-          <button className="btn btn-outline" onClick={() => fileRef.current.click()}><Icon name="upload" size={17} /> Backup importieren</button>
+          <button className="btn btn-outline" onClick={() => fileRef.current.click()} disabled={busy}><Icon name="upload" size={17} /> Backup importieren</button>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={doImport} />
         </div>
         <div className="row-buttons">
           <button className="btn btn-ghost" onClick={() => setConfirm('reset')}><Icon name="refresh" size={17} /> Beispielrezepte wiederherstellen</button>
-          <button className="btn btn-ghost danger-text" onClick={() => setConfirm('clear')}><Icon name="trash" size={17} /> Alle Daten löschen</button>
+          {!online && <button className="btn btn-ghost danger-text" onClick={() => setConfirm('clear')}><Icon name="trash" size={17} /> Alle Daten löschen</button>}
         </div>
       </section>
 
       <section className="card settings-card info-card">
         <h2><Icon name="lock" size={18} /> Datenschutz</h2>
-        <p className="muted">
-          iCook ist ein Frontend-Prototyp ohne Server, Datenbank oder Konto. Alle Rezepte, Bilder und Notizen werden
-          <strong> ausschließlich lokal in diesem Browser</strong> gespeichert (localStorage) und nicht übertragen.
-          Wird der Browser-Speicher gelöscht, gehen die Daten verloren – erstelle daher regelmäßig ein Backup.
-        </p>
+        {online ? (
+          <p className="muted">
+            Rezepte, Kategorien und Fotos werden in einer <strong>öffentlichen Online-Datenbank</strong> (Supabase) gespeichert.
+            Alle, die den Link kennen, können sie sehen, ändern und löschen – bitte keine privaten Daten eintragen.
+            Erstelle regelmäßig ein Backup, falls etwas versehentlich gelöscht wird.
+          </p>
+        ) : (
+          <p className="muted">
+            iCook ist ein Frontend-Prototyp ohne Server, Datenbank oder Konto. Alle Rezepte, Bilder und Notizen werden
+            <strong> ausschließlich lokal in diesem Browser</strong> gespeichert (localStorage) und nicht übertragen.
+            Wird der Browser-Speicher gelöscht, gehen die Daten verloren – erstelle daher regelmäßig ein Backup.
+          </p>
+        )}
       </section>
 
       <p className="muted tiny center">iCook · Version 0.1 (Konzept-Prototyp)</p>
@@ -133,9 +181,11 @@ export default function SettingsPage() {
       {confirm === 'reset' && (
         <ConfirmDialog
           title="Beispielrezepte wiederherstellen?"
-          message="Alle aktuellen Rezepte, Kategorien und die Einkaufsliste werden durch die Beispieldaten ersetzt."
+          message={online
+            ? 'Die Beispielrezepte und -kategorien werden für alle wiederhergestellt. Andere Rezepte bleiben erhalten; die Einkaufsliste wird geleert.'
+            : 'Alle aktuellen Rezepte, Kategorien und die Einkaufsliste werden durch die Beispieldaten ersetzt.'}
           confirmLabel="Wiederherstellen"
-          onConfirm={() => { resetToSamples(); setConfirm(null); toast('Beispieldaten wiederhergestellt'); }}
+          onConfirm={() => { setConfirm(null); run(resetToSamples, 'Beispieldaten wiederhergestellt'); }}
           onCancel={() => setConfirm(null)}
         />
       )}

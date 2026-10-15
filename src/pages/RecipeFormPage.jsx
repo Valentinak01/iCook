@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import CategoryEditor from '../components/CategoryEditor.jsx';
 import ImageFramer from '../components/ImageFramer.jsx';
-import { CategoryTag, EmptyState, PageHeader, Stepper } from '../components/ui.jsx';
+import { CategoryTag, EmptyState, LoadingState, PageHeader, Stepper } from '../components/ui.jsx';
 import { Link, navigate, setNavigationBlocker } from '../router.jsx';
 import { useStore } from '../store.jsx';
 import { ALLERGENS, DIFFICULTIES, capitalize, UNITS, formatMinutes, frameStyle, isSimilarTitle, parseAmount, parseIngredientLine, resizeImage, uid } from '../utils.js';
@@ -57,11 +57,13 @@ function Section({ number, title, hint, children }) {
 }
 
 export default function RecipeFormPage({ id }) {
-  const { recipes, categories, addRecipe, updateRecipe, toast } = useStore();
+  const { recipes, categories, addRecipe, updateRecipe, toast, loading } = useStore();
   const existing = id ? recipes.find((r) => r.id === id) : null;
 
-  const initial = useMemo(() => toForm(existing), [id]);
+  const initial = useMemo(() => toForm(existing), [id, !!existing]);
   const [form, setForm] = useState(initial);
+  // Rezept kam erst nach dem Laden aus der Online-Datenbank
+  useEffect(() => { setForm(initial); }, [initial]);
   const [errors, setErrors] = useState({});
   const [newCategory, setNewCategory] = useState(false);
   const [bulk, setBulk] = useState({ ingredients: null, steps: null });
@@ -97,6 +99,7 @@ export default function RecipeFormPage({ id }) {
   }, [categories]);
 
   if (id && !existing) {
+    if (loading) return <div className="page"><LoadingState /></div>;
     return <div className="page"><EmptyState icon="alert" title="Rezept nicht gefunden" action={<Link to="/rezepte" className="btn btn-primary">Zur Übersicht</Link>} /></div>;
   }
 

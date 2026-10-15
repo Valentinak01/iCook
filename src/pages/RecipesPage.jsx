@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import RecipeCard from '../components/RecipeCard.jsx';
-import { CategoryTag, EmptyState, PageHeader } from '../components/ui.jsx';
+import { CategoryTag, EmptyState, LoadingState, PageHeader } from '../components/ui.jsx';
 import { Link, navigate } from '../router.jsx';
 import { useStore } from '../store.jsx';
 import { normalize, totalTime, DIFFICULTIES, capitalize } from '../utils.js';
@@ -22,7 +22,7 @@ const SORTS = [
 ];
 
 export default function RecipesPage({ query, favoritesOnly = false }) {
-  const { recipes, categories, settings, updateSettings } = useStore();
+  const { recipes, categories, settings, updateSettings, loading } = useStore();
 
   const [q, setQ] = useState(query.get('q') || '');
   const [mode, setMode] = useState('title'); // title | ingredients
@@ -200,7 +200,9 @@ export default function RecipesPage({ query, favoritesOnly = false }) {
         )}
       </p>
 
-      {results.length ? (
+      {loading ? (
+        <LoadingState />
+      ) : results.length ? (
         <div className={view === 'list' ? 'recipe-list' : 'recipe-grid'}>
           {results.map((r) => <RecipeCard key={r.id} recipe={r} layout={view} />)}
         </div>

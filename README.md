@@ -46,7 +46,25 @@ src/
   styles.css              Dark-Mode-Design
 ```
 
+## Gemeinsames Rezeptbuch (Online-Datenbank)
+
+Ohne Einrichtung speichert iCook alles nur im jeweiligen Browser. Mit einer kostenlosen
+[Supabase](https://supabase.com)-Datenbank sind Rezepte, Kategorien und Fotos für **alle** sichtbar
+und von **allen** bearbeitbar (ohne Anmeldung). Favoriten, Einkaufsliste und Einstellungen bleiben persönlich im Browser.
+
+1. Auf supabase.com ein kostenloses Konto und ein Projekt anlegen (Region z. B. *Frankfurt*).
+2. Im Dashboard **SQL Editor** öffnen, den Inhalt von `supabase/schema.sql` einfügen und **Run** klicken.
+3. Unter **Project Settings → API** die *Project URL* und den *anon public* Key kopieren und in
+   `src/config.js` eintragen. **Niemals** den `service_role`-Key verwenden.
+4. Committen und pushen – GitHub Pages veröffentlicht die neue Version automatisch.
+5. Beim ersten Öffnen legt die App die Beispielrezepte an. Eigene Rezepte aus dem Browser lassen sich unter
+   **Einstellungen → Speicherort → Hochladen** übertragen.
+
+Hinweise: Alle, die den Link kennen, können Rezepte ändern und löschen – regelmäßig ein Backup exportieren.
+Kostenlose Supabase-Projekte pausieren nach etwa einer Woche ohne Nutzung und lassen sich im Dashboard wieder starten.
+
 ## Grenzen des Prototyps
 
-- Daten liegen nur im jeweiligen Browser. Das Teilen mit anderen und gemeinsame Rezeptbücher („für alle sichtbar“) brauchen später ein Backend.
+- Ohne Online-Datenbank liegen die Daten nur im jeweiligen Browser (siehe oben).
+- Mit Online-Datenbank gilt: Wer zuletzt speichert, gewinnt – gleichzeitiges Bearbeiten desselben Rezepts überschreibt sich.
 - Der Speicherplatz im Browser ist begrenzt (ca. 5 MB). Fotos werden deshalb verkleinert.

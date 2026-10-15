@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import RecipeCard from '../components/RecipeCard.jsx';
-import { RecipeImage, EmptyState } from '../components/ui.jsx';
+import { RecipeImage, EmptyState, LoadingState } from '../components/ui.jsx';
 import { Link, navigate } from '../router.jsx';
 import { useStore } from '../store.jsx';
 import { totalTime, formatMinutes, capitalize } from '../utils.js';
@@ -35,7 +35,7 @@ function recipeOfTheDay(recipes) {
 }
 
 export default function HomePage() {
-  const { recipes, categories } = useStore();
+  const { recipes, categories, loading } = useStore();
   const [q, setQ] = useState('');
 
   const isQuick = (r) => totalTime(r) > 0 && totalTime(r) <= QUICK_MINUTES;
@@ -131,7 +131,9 @@ export default function HomePage() {
         )}
       </section>
 
-      {!recipes.length && (
+      {loading && <LoadingState />}
+
+      {!recipes.length && !loading && (
         <EmptyState
           icon="chef"
           title="Dein Rezeptbuch ist noch leer"

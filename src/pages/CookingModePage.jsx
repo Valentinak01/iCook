@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
-import { Stars } from '../components/ui.jsx';
+import { LoadingState, Stars } from '../components/ui.jsx';
 import { navigate, previousPath } from '../router.jsx';
 import { useStore } from '../store.jsx';
 import { prettyAmount, scaledAmount } from '../utils.js';
 
 // Ablenkungsfreie Schritt-für-Schritt-Ansicht mit großer Schrift
 export default function CookingModePage({ id, query }) {
-  const { recipes, settings, updateRecipe, toast } = useStore();
+  const { recipes, settings, updateRecipe, toast, loading } = useStore();
   const recipe = recipes.find((r) => r.id === id);
   const servings = Number(query.get('portionen')) || recipe?.servings || 1;
   const [step, setStep] = useState(0);
@@ -56,7 +56,7 @@ export default function CookingModePage({ id, query }) {
     };
   }, [total]);
 
-  if (!recipe) return null;
+  if (!recipe) return loading ? <div className="cook-mode"><LoadingState /></div> : null;
   const factor = servings / recipe.servings;
   const progress = total ? Math.min(100, (step / total) * 100) : 100;
 

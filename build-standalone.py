@@ -11,6 +11,9 @@ SRC = ROOT / "src"
 ORDER = [
     "utils.js",
     "data/sampleData.js",
+    "config.js",
+    "lib/supabase.js",
+    "lib/remote.js",
     "store.jsx",
     "router.jsx",
     "components/Icon.jsx",
@@ -41,6 +44,7 @@ for rel in ORDER:
 prelude = (
     "const { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } = React;\n"
     "const { createPortal } = ReactDOM;\n"
+    "const createClient = window.supabase ? window.supabase.createClient : undefined;\n"
 )
 bootstrap = "\nReactDOM.createRoot(document.getElementById('root')).render(<App />);\n"
 app_code = prelude + "\n".join(parts) + bootstrap
@@ -62,6 +66,7 @@ html = f"""<!doctype html>
 <div id="root"></div>
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 <script type="text/babel" data-presets="react">
 {app_code}

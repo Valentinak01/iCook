@@ -46,7 +46,7 @@ function SideLink({ item, path, badge = null }) {
 }
 
 export default function Layout({ path, children }) {
-  const { shopping } = useStore();
+  const { shopping, online } = useStore();
   const openItems = shopping.filter((i) => !i.checked).length;
 
   const badge = (to) =>
@@ -70,7 +70,9 @@ export default function Layout({ path, children }) {
         <div className="sidebar-bottom">
           <SideLink item={SETTINGS} path={path} />
           <div className="sidebar-foot muted">
-            <Icon name="lock" size={14} /> Rezepte werden nur lokal in diesem Browser gespeichert.
+            {online
+              ? <><Icon name="users" size={14} /> Rezepte werden online gespeichert und mit allen geteilt.</>
+              : <><Icon name="lock" size={14} /> Rezepte werden nur lokal in diesem Browser gespeichert.</>}
           </div>
         </div>
       </aside>

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import ImageFramer from '../components/ImageFramer.jsx';
-import { CategoryTag, ConfirmDialog, EmptyState, RecipeImage, Stars, Stepper } from '../components/ui.jsx';
+import { CategoryTag, ConfirmDialog, EmptyState, LoadingState, RecipeImage, Stars, Stepper } from '../components/ui.jsx';
 import { Link, lastPathOutside, navigate } from '../router.jsx';
 import { useStore } from '../store.jsx';
 import { formatMinutes, prettyAmount, recipeToText, resizeImage, scaledAmount, totalTime } from '../utils.js';
 
 export default function RecipeDetailPage({ id }) {
-  const { recipes, categories, settings, toggleFavorite, updateRecipe, deleteRecipe, duplicateRecipe, markUsed, addRecipesToShopping, toast } = useStore();
+  const { recipes, categories, settings, toggleFavorite, updateRecipe, deleteRecipe, duplicateRecipe, markUsed, addRecipesToShopping, toast, loading } = useStore();
   const recipe = recipes.find((r) => r.id === id);
 
   const [servings, setServings] = useState(recipe?.servings || 2);
@@ -30,9 +30,10 @@ export default function RecipeDetailPage({ id }) {
     setChecked({});
     setDoneSteps({});
     setExperience(recipe.experience || '');
-  }, [id]);
+  }, [id, !!recipe]);
 
   if (!recipe) {
+    if (loading) return <div className="page"><LoadingState /></div>;
     return (
       <div className="page">
         <EmptyState icon="alert" title="Rezept nicht gefunden" text="Vielleicht wurde es gelöscht." action={<Link to="/rezepte" className="btn btn-primary">Zur Übersicht</Link>} />

@@ -140,6 +140,15 @@ export function CategoryTag({ category, small = false, onClick, active = false }
   );
 }
 
+export function LoadingState({ text = 'Rezepte werden geladen …' }) {
+  return (
+    <div className="empty" role="status">
+      <span className="spinner" aria-hidden="true" />
+      <p className="muted">{text}</p>
+    </div>
+  );
+}
+
 export function EmptyState({ icon = 'book', title, text, action }) {
   return (
     <div className="empty">
